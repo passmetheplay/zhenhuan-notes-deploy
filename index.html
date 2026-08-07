@@ -39,6 +39,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword
   .body-text .source { color: #999; font-size: 13px; font-style: italic; }
   .images { margin: 16px 0; }
   .images img { width: 100%; max-width: 600px; display: block; margin: 8px 0; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .download-btn { display: inline-block; margin: 4px 0 12px; background: #c44536; color: #fff; border: none; padding: 8px 18px; font-size: 13px; border-radius: 8px; cursor: pointer; }
+  .download-btn:hover { background: #a8382a; }
+  .download-btn:disabled { background: #c9a19a; cursor: wait; }
   .separator { border: none; border-top: 1px dashed #ddd; margin: 36px 0 32px; }
   .account-tag { display: inline-block; background: #e8f0fe; color: #1a73e8; font-size: 12px; padding: 2px 10px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
 </style>
@@ -518,5 +521,43 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword
 </div>
 
 </div>
+
+<script>
+(function () {
+  document.querySelectorAll('.images').forEach(function (images) {
+    var btn = document.createElement('button');
+    btn.className = 'download-btn';
+    btn.textContent = '下载本篇原图';
+    images.appendChild(btn);
+
+    btn.addEventListener('click', async function () {
+      var pngs = Array.prototype.slice.call(images.querySelectorAll('img[src$=".png"]'));
+      if (!pngs.length) return;
+      btn.disabled = true;
+      btn.textContent = '正在下载…';
+      try {
+        for (var i = 0; i < pngs.length; i++) {
+          var url = new URL(pngs[i].getAttribute('src'), location.href).href;
+          var res = await fetch(url);
+          var blob = await res.blob();
+          var name = pngs[i].getAttribute('src').split('/').pop();
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+          await new Promise(function (r) { setTimeout(r, 300); });
+        }
+      } catch (e) {
+        alert('下载失败：' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '下载本篇原图';
+      }
+    });
+  });
+})();
+</script>
 </body>
 </html>
